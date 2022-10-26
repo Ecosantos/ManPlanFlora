@@ -541,7 +541,11 @@ FinalData<-FinalData%>%
 names(FinalData)[c(7,8)]<-c("Long","Lat")
 
 #Write the supplementary material in CSV format
+<<<<<<< HEAD
 #write.csv(FinalData,"Supplementary material2 Data.csv")
+=======
+#write.csv(FinalData,"Script and Data/Supplementary material2.csv")
+>>>>>>> f55e510eff1fe7871c5da7899dd15b9ce3a0cd6f
 
 #===================================================================================
 #			READ AS LEAFLET
