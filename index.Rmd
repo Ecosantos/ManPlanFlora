@@ -6,9 +6,10 @@ output:
  html_document:
   TOC: true
   toc_float: true 
+  self_contained: true
 ---
 
-The present document provides access to the final dataset in the manuscript - Protected areas without management plans contain fewer threatened species than those with management plans - in review"
+The present document provides access to the final dataset in the manuscript *Management plans bias the number of threatened species in protected areas* in review"
 `r format(Sys.time(), '%Y')`. Data is automatically downloadable in the *.csv* format
 by pressing the "**Excel**" bottom.
 
@@ -51,12 +52,16 @@ library(tidyverse)
 library(knitr)
 
 dir()
-FinalData<-read.csv("Supplementary material2 Data.csv")
+
+#FinalData<-read.csv("Supplementary material2 Data.csv",sep=";")
+FinalData<-openxlsx::read.xlsx("Supplementary material2 Data.xlsx")
+FinalData<-FinalData%>%mutate(across(c("HFP1993":"Lat"),as.numeric))
 ```
 
 ```{r echo=FALSE}
 FinalData%>%
-  select(-X)%>%
+  select(-c(X1,HFP1993,UC_CODE2))%>%
+  select(ID_UC2:Richness,Richness_pred,ANO2,Long,Lat)%>%
   mutate(Richness_pred=round(Richness_pred,0))%>%
   DT::datatable(editable=FALSE,extensions="Buttons",rownames = FALSE,
                 options=list(
@@ -72,7 +77,8 @@ FinalData%>%
                                      width= "20%", targets= 0))))%>%
     DT::formatStyle("UC_NAME2", fontSize = "50")%>%
   DT::formatRound("Long", digits=3)%>%
-  DT::formatRound("Lat", digits=3)
+  DT::formatRound("Lat", digits=3)%>%
+  DT::formatRound("Area", digits=3)
 ```
 
 ## DATA VISUALIZATION - Interactive
@@ -97,12 +103,11 @@ Rich_pal <- colorFactor(c("pink","blue","yellow", "orange" ,"red", "black"), dom
 
 
 FinalData<-FinalData%>%
-mutate(Richness=as.numeric(Richness))%>%
-    mutate(Radius = case_when(between(Richness,0,4)  ~  1,
-                            between(Richness,5,9)  ~  3,
-                            between(Richness,10,50)  ~ 5,
-                            Richness  > 50  ~  10))
-
+  mutate(Richness=as.numeric(Richness))%>%
+  mutate(Radius = case_when(between(Richness,0,4)  ~  log(5),
+                            between(Richness,5,9)  ~  log(10),
+                            between(Richness,10,50)  ~ log(50),
+                            Richness  > 50  ~  log(100)))
 
 pal_man<- colorFactor(c("tomato","royalblue2"), domain = FinalData$PLA_MAN2)
 ```
@@ -112,38 +117,41 @@ pal_man<- colorFactor(c("tomato","royalblue2"), domain = FinalData$PLA_MAN2)
 ```{r include=FALSE}
 hist(log(FinalData$Richness+1))
 ```
+
 ```{r message=FALSE, warning=FALSE, include=TRUE, echo=FALSE, out.width="600px", out.height="900px"}
-leaflet(FinalData, height=600, width=1000)%>%
-   addMiniMap()%>%
+
+leaflet(FinalData)%>%
+ # addMiniMap()%>%  
   addTiles() %>%  # Add default OpenStreetMap map tiles
-addCircleMarkers(lng = ~Long, lat = ~Lat,
-#                 clusterOptions = markerClusterOptions(),
-#                  color = ~ifelse(PLA_MAN2=="Sim","Blue","Red"),
-                  radius = ~Radius*2,
-                       color = ~pal_man(PLA_MAN2),
-#                       color = ~Rich_pal(bins),
-#                       color = ~pal(na.omit(Richness+1)),
+  addSymbolsSize(
+    values = ~Radius,
+    shape="circle",
+    opacity=.6,
+    color=~pal_man(PLA_MAN2),
+    fillColor = ~pal_man(PLA_MAN2),
+        lng = ~Long, lat = ~Lat,
+           baseSize=10,
              popup = ~paste0(UC_NAME2,
-	"<br/><strong>Jurisprudence</strong>:",ESF_ADM2,
-	"<br/><strong>Management plan.:</strong>",PLA_MAN2,
-	"<br/><strong>Threatened Species Observed:</strong>",Richness,
-	"<br/><strong>Threatened Species Predicted:</strong>",round(Richness_pred),0))%>%
-addLegendSize(
-    values = FinalData$Radius*5,
- #   labels = FinalData$bins,
+                             "<br/><strong>Jurisprudence</strong>:",ESF_ADM2,
+                             "<br/><strong>Management plan.:</strong>",PLA_MAN2,
+                             "<br/><strong>Threatened Species Observed:</strong>",Richness,
+                             "<br/><strong>Threatened Species Predicted:</strong>",round(Richness_pred),0))%>%
+  addLegendSize(
+    values = ~exp(FinalData$Radius),
     color = 'black',
-    strokeWidth = 2,
     title = 'Threatened species richness',
     shape = 'circle',
     orientation = 'horizontal',
-    opacity = .5,
-    fillOpacity = .3,
-    breaks = 4,
-    position = 'topright') %>%
-  addLegend("topright", pal=pal_man, values = ~PLA_MAN2,
-    title = "Management plan",
-#  orientation = 'horizontal',
-    labFormat = labelFormat(prefix = ""),
-    opacity = 1)
+    baseSize=10,
+    fillOpacity = 0.3,
+    breaks = 5,
+    position  ='topright')%>%
+  addLegend("topright", 
+            pal=pal_man, values = ~PLA_MAN2,
+            title = "Management plan",
+            #  orientation = 'horizontal',
+            labFormat = labelFormat(prefix = ""),
+            opacity = 1)
+  
 ```
 
