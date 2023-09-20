@@ -9,7 +9,16 @@ output:
   self_contained: true
 ---
 
+<<<<<<< HEAD
 The present document provides access to the final dataset in the manuscript *Management plans bias the number of threatened species in protected areas* in review" `r format(Sys.time(), '%Y')`. Data is automatically downloadable in the *.csv* format by pressing the "**Excel**" bottom.
+=======
+The present document provides access to the final dataset in the manuscript *Management plans bias the number of threatened species in protected areas* in review"
+`r format(Sys.time(), '%Y')`. Data is automatically downloadable in the *.csv* format
+by pressing the "**Excel**" bottom.
+
+Column names follow Loss *et al*. *in press* and each meanings is
+described below:
+>>>>>>> ce1cf28d68e9e2f29148b0530155d32c6b5c7320
 
 ## Metadata
 
@@ -100,7 +109,11 @@ pal_man<- colorFactor(c("tomato","royalblue2"), domain = FinalData$PLA_MAN2)
 hist(log(FinalData$Richness+1))
 ```
 
+<<<<<<< HEAD
 ```{r message=FALSE, warning=FALSE, include=TRUE, echo=FALSE, out.width="100%", out.height="900px"}
+=======
+```{r message=FALSE, warning=FALSE, include=TRUE, echo=FALSE, out.width="600px", out.height="900px"}
+>>>>>>> ce1cf28d68e9e2f29148b0530155d32c6b5c7320
 
 leaflet(FinalData)%>%
  # addMiniMap()%>%  
