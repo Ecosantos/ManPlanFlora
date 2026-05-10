@@ -2,7 +2,4 @@ Manuscript is now published at [Biodiversity & Conservation](https://link.spring
 
 Code and supplementary material are provided on publisher's webpage.
 
-Please cite as: Santos GS, Moreira DO, Ana Carolina Loss, Mário Luís Garbin. 2024. Management plans bias the number of threatened species in protected areas: a study case with flora species in the Atlantic Forest. xx:xx. DOI: 10.1007/s10531-024-02796-y.
-
-
-
+Please cite as: Santos GS, Moreira DO, Loss AC, Garbin ML. 2024. Management plans bias the number of threatened species in protected areas: a study case with flora species in the Atlantic Forest. Biodiversity and Conservation 33:843–858. DOI: 10.1007/s10531-024-02796-y.

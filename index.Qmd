@@ -1,0 +1,163 @@
+---
+title: "Supplementary material 2"
+author:
+  - name: Gabriel S. Santos
+    orcid: 0000-0001-7991-8807
+    affiliation: 
+      - name: Instituto Nacional da Mata Atlântica (INMA)
+date: "04 February 2024"
+date-modified: last-modified
+funding: "O presente trabalho foi realizado com apoio da [Nome da Instituição/Agência de Fomento], processo nº 0000/00."
+format:
+  html:
+    df-print: paged
+    smooth-scroll: true
+    theme: cosmo
+embed-resources: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Geospatial distribution of protected areas is presented here, with point size proportional to threatened flora diversity. Color-coding distinguishes areas based on management plan implementation, while pop-ups provide site-specific data on jurisdiction and projected richness.
+
+
+::: {.panel-tabset} 
+
+<!-- Produce the cleaned dataset but show after the map 
+
+--> 
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(knitr)
+
+dir()
+
+#FinalData<-read.csv("Supplementary material2 Data.csv",sep=";")
+FinalData<-openxlsx::read.xlsx("Supplementary material2 Data.xlsx")
+FinalData<-FinalData%>%mutate(across(c("HFP1993":"Lat"),as.numeric))
+```
+
+## DATA VISUALIZATION - Interactive
+
+An interactive data visualization is provided
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(leaflet)
+library(leaflegend)
+library(leaflet.extras)
+FinalData2<-FinalData
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+FinalData<-FinalData2
+FinalData$bins<-cut(FinalData$Richness,
+breaks=c(-1,4,10,50,100,500),
+labels=c("<5","5-10","10-49","50-99",">100"))
+
+Rich_pal <- colorFactor(c("pink","blue","yellow", "orange" ,"red", "black"), domain = FinalData$bins)
+
+
+FinalData<-FinalData%>%
+  mutate(Richness=as.numeric(Richness))%>%
+  mutate(Radius = case_when(between(Richness,0,4)  ~  log(5),
+                            between(Richness,5,9)  ~  log(10),
+                            between(Richness,10,50)  ~ log(50),
+                            Richness  > 50  ~  log(100)))
+
+pal_man<- colorFactor(c("tomato","royalblue2"), domain = FinalData$PLA_MAN2)
+```
+
+```{r include=FALSE}
+hist(log(FinalData$Richness+1))
+```
+
+```{r message=FALSE, warning=FALSE, include=TRUE, echo=FALSE, out.width="100%", out.height="900px"}
+leaflet(FinalData)%>%
+ # addMiniMap()%>%  
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addSymbolsSize(
+    values = ~Radius,
+    shape="circle",
+    opacity=.6,
+    color=~pal_man(PLA_MAN2),
+    fillColor = ~pal_man(PLA_MAN2),
+        lng = ~Long, lat = ~Lat,
+           baseSize=10,
+             popup = ~paste0(UC_NAME2,
+                             "<br/><strong>Jurisprudence</strong>:",ESF_ADM2,
+                             "<br/><strong>Management plan.:</strong>",PLA_MAN2,
+                             "<br/><strong>Threatened Species Observed:</strong>",Richness,
+                             "<br/><strong>Threatened Species Predicted:</strong>",round(Richness_pred),0))%>%
+  addLegendSize(
+    values = ~exp(FinalData$Radius),
+    color = 'black',
+    title = 'Threatened species richness',
+    shape = 'circle',
+    orientation = 'horizontal',
+    baseSize=10,
+    fillOpacity = 0.3,
+    breaks = 5,
+    position  ='topright')%>%
+  addLegend("topright", 
+            pal=pal_man, values = ~PLA_MAN2,
+            title = "Management plan",
+            #  orientation = 'horizontal',
+            labFormat = labelFormat(prefix = ""),
+            opacity = 1)%>%
+              addFullscreenControl(position = "topleft")
+  
+```
+
+
+## Cleaned dataset
+
+```{r echo=FALSE}
+FinalData%>%
+  select(-c(X1,HFP1993,UC_CODE2))%>%
+  select(ID_UC2:Richness,Richness_pred,ANO2,Long,Lat)%>%
+  mutate(Richness_pred=round(Richness_pred,0))%>%
+  DT::datatable(editable=FALSE,extensions="Buttons",rownames = FALSE,
+                options=list(
+                  dom="Blfrtip",
+                displayLength= 25,
+                buttons=c("excel"),
+                  pageLength = 5,
+                  lengthMenu = c(5, 10, 20, 50),
+  #               fixedColumns = TRUE,
+                  autoWidth = TRUE,
+                  columnDefs = list(list(className = 'dt-center', targets = c(2:8),
+                                    #width = '5000px', targets = c(3:7),
+                                     width= "20%", targets= 0))))%>%
+    DT::formatStyle("UC_NAME2", fontSize = "50")%>%
+  DT::formatRound("Long", digits=3)%>%
+  DT::formatRound("Lat", digits=3)%>%
+  DT::formatRound("Area", digits=3)
+```
+
+
+## Metadata
+
+| **Column**    | **Description**                                                                             |
+| :-----------: | :-----------------------------------------------------------------------------------------: |
+| UC_NAME      | Protected area name                                                                         |
+| ID_UC        | A unique ID number is assigned for each protected area polygon.                             |
+| IUCN_CAT     | [IUCN category](https://www.iucn.org/theme/protected-areas/about/protected-area-categories) |
+| ESF_ADM      | Protected area jurisdiction                                                                 |
+| PLA_MAN      | Yes/No for Presence/Absence of management plans                                             |
+| Richness:     | Observed richness of threatened flora specie                                                |
+| Richness_pred | Best model prediction of threatened flora species                                           |
+| Lat           | Protected area's centroid latitude                                                          |
+| Long          | Protected area's centroid longitude                                                         |
+
+
+
+
+
+:::
+
+# Published paper 
+Santos GS, Moreira DO, Loss AC, Garbin ML. 2024. Management plans bias the number of threatened species in protected areas: a study case with flora species in the Atlantic Forest. Biodiversity and Conservation 33:843–858. DOI: [10.1007/s10531-024-02796-y]().
